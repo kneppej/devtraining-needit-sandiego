@@ -63,6 +63,7 @@ while (grAsset.next()) {
 
             grCI.autoSysFields(updRecFields);
             grCI.update();
+            grCI.get(grAsset.ci);
             gs.print('CI:  ' + grCI.model_id.getDisplayValue());
 
         } else {
@@ -80,6 +81,7 @@ while (grAsset.next()) {
 
     grAsset.autoSysFields(updRecFields);
     grAsset.update();
+    grAsset.get(grAsset.getUniqueValue());
     gs.print('Asset:  ' + grAsset.model.getDisplayValue());
 }
 
