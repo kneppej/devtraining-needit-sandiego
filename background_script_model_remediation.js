@@ -39,6 +39,13 @@ grAsset.setLimit(recordLimit);
 
 grAsset.query();
 
+// Look up the correct model name once before the loop
+var correctModelName = '';
+var grCorrectModel = new GlideRecord('cmdb_hardware_product_model');
+if (grCorrectModel.get(correctModel)) {
+    correctModelName = grCorrectModel.getDisplayValue();
+}
+
 gs.print('===== STARTING HARDWARE MODEL REMEDIATION =====');
 
 while (grAsset.next()) {
@@ -51,20 +58,19 @@ while (grAsset.next()) {
 
         var grCI = new GlideRecord('cmdb_ci');
 
-        if (grCI.get(grAsset.ci)) {
+        if (grCI.get(grAsset.getValue('ci'))) {
 
             gs.print('Updating CI: ' + grCI.getDisplayValue());
 
-            grCI.model_id = correctModel;
+            grCI.setValue('model_id', correctModel);
 
             if (correctManufacturer) {
-                grCI.manufacturer = correctManufacturer;
+                grCI.setValue('manufacturer', correctManufacturer);
             }
 
             grCI.autoSysFields(updRecFields);
             grCI.update();
-            grCI.get(grAsset.ci);
-            gs.print('CI:  ' + grCI.model_id.getDisplayValue());
+            gs.print('CI:  ' + correctModelName);
 
         } else {
 
@@ -77,12 +83,11 @@ while (grAsset.next()) {
 
     gs.print('Updating Asset Model: ' + grAsset.asset_tag);
 
-    grAsset.model = correctModel;
+    grAsset.setValue('model', correctModel);
 
     grAsset.autoSysFields(updRecFields);
     grAsset.update();
-    grAsset.get(grAsset.getUniqueValue());
-    gs.print('Asset:  ' + grAsset.model.getDisplayValue());
+    gs.print('Asset:  ' + correctModelName);
 }
 
 
