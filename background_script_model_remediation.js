@@ -54,6 +54,9 @@ while (grAsset.next()) {
 
     //UPDATE RELATED CI FIRST
 
+    var ciCategory = '';
+    var ciCategoryDisplay = '';
+
     if (grAsset.ci) {
 
         var grCI = new GlideRecord('cmdb_ci');
@@ -61,6 +64,9 @@ while (grAsset.next()) {
         if (grCI.get(grAsset.getValue('ci'))) {
 
             gs.print('Updating CI: ' + grCI.getDisplayValue());
+
+            ciCategory = grCI.getValue('category');
+            ciCategoryDisplay = grCI.category.getDisplayValue();
 
             grCI.setValue('model_id', correctModel);
 
@@ -85,9 +91,13 @@ while (grAsset.next()) {
 
     grAsset.setValue('model', correctModel);
 
+    if (ciCategory) {
+        grAsset.setValue('category', ciCategory);
+    }
+
     grAsset.autoSysFields(updRecFields);
     grAsset.update();
-    gs.print('Asset:  ' + correctModelName);
+    gs.print('Asset:  ' + correctModelName + ' | Category: ' + ciCategoryDisplay);
 }
 
 
