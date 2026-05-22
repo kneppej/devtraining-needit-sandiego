@@ -1,8 +1,10 @@
 // UI Action: Remediate Asset Model
 // Table:     alm_hardware
-// Condition: current.model == '686bca4d1bda0dd0ba6365f1604bcb90'
 // Client:    false (server-side)
 // Show on:   Form
+//
+// Condition (hide when category is already correctly set as main):
+//   current.model_category.allow_as_master != true
 
 (function () {
 
@@ -25,13 +27,14 @@
         }
     }
 
-    // ── 2. FIND BASE/ROOT CATEGORY FROM CI MODEL_CATEGORY LIST ───────────────
+    // ── 2. FIND MAIN CATEGORY FROM CI MODEL_CATEGORY LIST ────────────────────
     //
-    // model_category is a list collector (glide_list) on cmdb_ci, stored as
-    // comma-separated sys_ids. Walk each entry up the cmdb_model_category
-    // hierarchy to find the root (a record whose parent field is empty).
+    // model_category on cmdb_ci is a list collector (glide_list) stored as
+    // comma-separated sys_ids. The correct category for the asset is the one
+    // in that list with allow_as_master = true. If none have the flag set,
+    // fall back to the first entry.
 
-    var baseCategory = '';
+    var mainCategory = '';
 
     if (ciSysId) {
 
@@ -44,22 +47,29 @@
             if (categoryList) {
 
                 var categoryIds = categoryList.split(',');
+                var fallback    = '';
 
                 for (var i = 0; i < categoryIds.length; i++) {
 
                     var catId = categoryIds[i].trim();
-
-                    // Walk up the hierarchy to find the root for this entry
                     var grCat = new GlideRecord('cmdb_model_category');
-                    while (grCat.get(catId) && grCat.getValue('parent')) {
-                        catId = grCat.getValue('parent');
-                    }
 
-                    // grCat now holds the root category for this branch
-                    if (grCat.isValidRecord()) {
-                        baseCategory = grCat.getUniqueValue();
-                        break; // first root found wins
+                    if (grCat.get(catId)) {
+
+                        if (grCat.getValue('allow_as_master') == '1') {
+                            mainCategory = catId;
+                            break;
+                        }
+
+                        if (!fallback) {
+                            fallback = catId;
+                        }
                     }
+                }
+
+                // Use fallback only if no category had allow_as_master set
+                if (!mainCategory) {
+                    mainCategory = fallback;
                 }
             }
         }
@@ -69,8 +79,8 @@
 
     current.setValue('model', correctModel);
 
-    if (baseCategory) {
-        current.setValue('category', baseCategory);
+    if (mainCategory) {
+        current.setValue('model_category', mainCategory);
     }
 
     current.update();
